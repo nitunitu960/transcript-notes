@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TranscriptNotes — YouTube Transcript Extractor & Smart Notes</title>
+  <meta name="description" content="Extract full timestamped transcripts from any YouTube video and generate structured notes. Free Chrome extension." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #5b7fff;
+      --primary-dark: #4a6fe8;
+      --purple: #7c5cfc;
+      --bg: #ffffff;
+      --bg2: #f8f9ff;
+      --text: #1a1a2e;
+      --text2: #6b7280;
+      --border: #e8eaf6;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo-icon svg { width: 18px; height: 18px; }
+    .nav-logo-name {
+      font-size: 17px; font-weight: 700;
+      color: var(--text); letter-spacing: -0.4px;
+    }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      padding: 9px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 90px 24px 70px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: var(--primary);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 22px;
+      border: 1px solid #c7d2fe;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--text2);
+      max-width: 520px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(91,127,255,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-hero-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(91,127,255,0.45);
+    }
+    .btn-hero-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: var(--text);
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .btn-hero-secondary:hover { border-color: #c7d2fe; }
+
+    /* ── MOCKUP ── */
+    .mockup-section {
+      display: flex;
+      justify-content: center;
+      padding: 0 24px 80px;
+    }
+    .mockup-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(91,127,255,0.1);
+    }
+    .mock-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .mock-logo {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 700;
+    }
+    .mock-logo-dot {
+      width: 24px; height: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      border-radius: 6px;
+    }
+    .mock-chip {
+      background: #eef2ff;
+      color: var(--primary);
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .mock-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 13px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .mock-yt {
+      width: 34px; height: 24px;
+      background: #ff0000; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .mock-yt-play {
+      width: 0; height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 8px solid white;
+      margin-left: 2px;
+    }
+    .mock-video-title { font-size: 11px; font-weight: 600; color: var(--text); }
+    .mock-video-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+    .mock-btn-primary {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white; border-radius: 9px;
+      font-size: 13px; font-weight: 700;
+      text-align: center; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .mock-btn-secondary {
+      width: 100%; padding: 11px;
+      background: white; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 13px; font-weight: 600;
+      text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .mock-output {
+      margin-top: 14px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-size: 10.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+    .mock-output-title { font-weight: 700; color: var(--text); margin-bottom: 5px; }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 80px 24px;
+      background: var(--bg2);
+      text-align: center;
+    }
+    .section-label {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 14px;
+    }
+    .section-sub {
+      font-size: 16px; color: var(--text2);
+      max-width: 480px; margin: 0 auto 50px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: left;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .feature-card:hover {
+      box-shadow: 0 8px 24px rgba(91,127,255,0.1);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 42px; height: 42px;
+      background: #eef2ff;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 14px;
+    }
+    .feature-title { font-size: 15px; font-weight: 700; margin-bottom: 7px; }
+    .feature-desc  { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    /* ── PRICING ── */
+    .pricing {
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .pricing-grid {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 280px;
+      text-align: left;
+      position: relative;
+    }
+    .price-card.highlight {
+      border-color: var(--primary);
+      box-shadow: 0 8px 30px rgba(91,127,255,0.15);
+    }
+    .price-popular {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 14px; border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .price-plan   { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+    .price-amount {
+      font-size: 36px; font-weight: 800;
+      letter-spacing: -1px; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .price-amount span { font-size: 16px; font-weight: 500; color: var(--text2); }
+    .price-desc { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+    .price-features { list-style: none; margin-bottom: 24px; }
+    .price-features li {
+      font-size: 13px; color: var(--text);
+      padding: 5px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .price-features li::before { content: '✓'; color: #10b981; font-weight: 700; }
+    .price-features li.no::before { content: '✗'; color: #e5e7eb; }
+    .price-features li.no { color: #9ca3af; }
+    .btn-price {
+      width: 100%; padding: 12px;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+      transition: all 0.2s;
+    }
+    .btn-price-free {
+      background: var(--bg2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-price-pro {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      box-shadow: 0 6px 18px rgba(91,127,255,0.3);
+    }
+    .btn-price-pro:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── FAQ ── */
+    .faq {
+      padding: 80px 24px;
+      background: var(--bg2);
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+    }
+    .faq-q { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .faq-a { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 30px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: #d1d5db;
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <span class="nav-logo-name">TranscriptNotes</span>
+    </a>
+    <a href="https://chrome.google.com/webstore" class="nav-cta">Add to Chrome — Free</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Free Chrome Extension
+    </div>
+    <h1>Extract YouTube Transcripts<br /><span>& Save Smart Notes</span></h1>
+    <p>Get full timestamped transcripts from any YouTube video in one click. Generate structured notes and export as Markdown.</p>
+    <div class="hero-btns">
+      <a href="https://chrome.google.com/webstore" class="btn-hero-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Add to Chrome — It's Free
+      </a>
+      <a href="#features" class="btn-hero-secondary">See how it works</a>
+    </div>
+  </section>
+
+  <!-- MOCKUP -->
+  <div class="mockup-section">
+    <div class="mockup-wrap">
+      <div class="mock-bar">
+        <div class="mock-logo">
+          <div class="mock-logo-dot"></div>
+          YT Transcript &amp; Notes
+        </div>
+        <div class="mock-chip">1 Free Left</div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-yt"><div class="mock-yt-play"></div></div>
+        <div>
+          <div class="mock-video-title">How to Learn Anything Fast</div>
+          <div class="mock-video-sub">Ali Abdaal · Ready</div>
+        </div>
+      </div>
+      <div class="mock-btn-primary">📋 Extract Key Points &amp; Notes</div>
+      <div class="mock-btn-secondary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M8 12h.01M12 12h.01M16 12h.01M8 16h8"/></svg>
+        Generate Transcript
+      </div>
+      <div class="mock-output">
+        <div class="mock-output-title">📺 How to Learn Anything Fast</div>
+        🎯 Summary<br/>
+        The Feynman Technique involves teaching concepts in simple terms...<br/><br/>
+        💡 Key Points<br/>
+        • Active recall beats passive re-reading by 2x<br/>
+        • Spaced repetition locks memories long-term<br/>
+        • Teaching others reveals gaps in your knowledge
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need</h2>
+    <p class="section-sub">Works on any YouTube video that has captions. No account required.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⏱️</div>
+        <div class="feature-title">Timestamped Transcript</div>
+        <div class="feature-desc">Every line comes with [0:00] timestamps so you can jump straight to the moment.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">Structured Notes</div>
+        <div class="feature-desc">Automatically generates a Summary section and Key Points bullet list from the transcript.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <div class="feature-title">Export as Markdown</div>
+        <div class="feature-desc">Download your notes as a .md file or copy to clipboard in one click.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">100% Private</div>
+        <div class="feature-desc">No data leaves your browser. No account, no tracking, no server calls.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Simple & fair</h2>
+    <p class="section-sub">Start for free, upgrade when you need more.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-plan">FREE</div>
+        <div class="price-amount">$0</div>
+        <div class="price-desc">Forever free</div>
+        <ul class="price-features">
+          <li>1 summary per day</li>
+          <li>Unlimited transcripts</li>
+          <li>Copy &amp; download notes</li>
+          <li class="no">Unlimited summaries</li>
+        </ul>
+        <a href="https://chrome.google.com/webstore" class="btn-price btn-price-free">Add to Chrome</a>
+      </div>
+      <div class="price-card highlight">
+        <div class="price-popular">MOST POPULAR</div>
+        <div class="price-plan">PRO</div>
+        <div class="price-amount">$5 <span>/ month</span></div>
+        <div class="price-desc">Billed monthly, cancel anytime</div>
+        <ul class="price-features">
+          <li>Unlimited summaries</li>
+          <li>Unlimited transcripts</li>
+          <li>Copy &amp; download notes</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="https://buy.dodopayments.com/buy/YOUR_LINK_HERE" class="btn-price btn-price-pro">Get Pro Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <div class="faq">
+    <div style="text-align:center; margin-bottom:40px;">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Does it work on all YouTube videos?</div>
+      <div class="faq-a">It works on any YouTube video that has captions or auto-generated subtitles enabled. Most videos do — you'll see a CC icon in the YouTube player.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data private?</div>
+      <div class="faq-a">Yes. Everything runs inside your browser. No text or video data is sent to any server. The extension only requests permission to run on youtube.com pages.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What does the free plan include?</div>
+      <div class="faq-a">1 summary generation per day (resets at midnight). Transcript extraction is always unlimited and free.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How do I upgrade to Pro?</div>
+      <div class="faq-a">When your daily limit is reached, click "Upgrade to Pro" in the extension popup. You'll be taken to our secure checkout powered by Dodo Payments.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 TranscriptNotes &nbsp;·&nbsp; <a href="privacy.html">Privacy Policy</a></p>
+  </footer>
+
+</body>
+</html>
